@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+
+  download:
+    build:
+      context: .
+      args:
+        K8S_VERSION: ${K8S_VERSION}
+    env_file:
+      - .env
+    volumes:
+      - ./images:/images
