@@ -7,6 +7,9 @@ IMAGES_FILE_PATH="./images/kubeadm-images.txt"
 # Flannel
 retrieve_images_from_url_yaml "flannel" "https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml" "$(pwd)/images"
 
+# Ingress
+retrieve_images_from_url_yaml "ingress-nginx" "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.0/deploy/static/provider/cloud/deploy.yaml" "$(pwd)/images"
+
 # Read kubeadm images
 while IFS= read -r line; do
     # Split the line using ":" as the delimiter

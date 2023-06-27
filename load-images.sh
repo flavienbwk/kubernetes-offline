@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source .env
 source ./helpers.sh
 
 IMAGES_FILE_PATH="./images/kubeadm-images.txt"
@@ -12,15 +13,15 @@ REGEX_IMAGE_WITH_DOMAIN='^(([a-z0-9]+\.)+([a-z]{2,}))\/[^/]+'
 push=false
 
 while getopts ":p" opt; do
-  case $opt in
-    p)
-      push=true
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-  esac
+    case $opt in
+        p)
+            push=true
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+        ;;
+    esac
 done
 
 # !/** Options **/
@@ -45,16 +46,16 @@ fi
 
 
 echo "INFO: Processing docker images in $IMAGES_DIR_PATH ..."
-private_registry="${REGISTRY_URL}/${REGISTRY_REPO_NAME}"
-private_registry_fmt=$(escape_slashes "$private_registry")
-for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -iname "*.txt"); do
+private_registry_fmt=$(escape_slashes "$PRIVATE_REGISTRY")
+for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -o -iname "*.yml" -o -iname "*.txt"); do
     echo "INFO: Replacing images found in file: $chart_yaml_file_path"
     docker_images=$(get_docker_images_from_file "$chart_yaml_file_path")
     docker_error_occured_in_file=0
+
     for docker_image in $docker_images; do
         docker_image_slug=$(slugify "$docker_image")
         docker_image_esc=$(escape_slashes "$docker_image")
-        docker_image_path="${IMAGES_DIR_PATH}/${DOCKER_IMAGE_SLUG}.tar"
+        docker_image_path="${IMAGES_DIR_PATH}/${docker_image_slug}.tar"
         if [[ $docker_image =~ $REGEX_IMAGE_WITH_DOMAIN ]]; then
             # Docker images with a domain
             docker_image_domain="${BASH_REMATCH[1]}"
@@ -67,15 +68,21 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -iname "*.
             docker_error_occured_in_file=1
             echo "WARN:     Docker image NOT FOUND : $docker_image_path !!"
             continue
-        do
+        fi
         echo "INFO: Loading \"$docker_image\"..."
         docker load -i "$docker_image_path"
-        if docker inspect "$docker_image_path" > /dev/null 2>&1; then
+        if docker inspect "$docker_image" > /dev/null 2>&1; then
             echo "INFO:     Load succeeded."
         else
             docker_error_occured_in_file=1
             echo "WARN:     Load failed."
             continue
+        fi
+
+        docker_image_private=$(echo $docker_image_private | sed -E 's/\\\//\//g')
+        # Edge case tag for coredns
+        if [[ $docker_image == *"coredns"* ]]; then
+            docker_image_private=$(echo $docker_image_private | sed -E 's/coredns\/coredns/coredns/g')
         fi
         echo "INFO:     Tagging to \"$docker_image_private\""
         docker tag "$docker_image" "$docker_image_private"
@@ -90,7 +97,7 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -iname "*.
         
         if $push ; then
             echo "INFO:     Pushing..."
-            docker push "$docker_image_path"
+            docker push "$docker_image_private"
             if [ $? -eq 0 ]; then
                 echo "INFO:     Pushed successfully."
             else
@@ -99,14 +106,18 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -iname "*.
                 continue
             fi
         fi
+
+        docker_image_private=$(escape_slashes "$docker_image_private")
+        docker_image=$(escape_slashes "$docker_image")
+        if [[ "$docker_error_occured_in_file" -eq 0 ]]; then
+            if [[ $chart_yaml_file_path == *.yaml ]]; then
+                sed -i -E "s/${docker_image}/${docker_image_private}/g" "$chart_yaml_file_path"
+                echo "INFO: OK."
+            fi
+        else
+            echo "WARN: Something went wrong, see logs above. Files were not edited."
+        fi
     done
-    if [[ "$docker_error_occured_in_file" -eq 0 ]]; then
-        sed -i -E "s/${docker_image}/${docker_image_private}/g" "$file_path"
-        echo "INFO: OK."
-    else
-        echo "WARN: Something went wrong, see logs above. Files were not edited."
-    fi
 done
-echo "INFO: OK."
 
 echo "INFO: OK."
