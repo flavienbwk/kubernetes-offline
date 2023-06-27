@@ -5,8 +5,25 @@ source ./helpers.sh
 IMAGES_FILE_PATH="./images/kubeadm-images.txt"
 CURRENT_DIR=$(pwd)
 PRIVATE_REGISTRY="${PRIVATE_REGISTRY_URL}/${PRIVATE_REGISTRY_REPO_NAME}"
-
 REGEX_IMAGE_WITH_DOMAIN='^(([a-z0-9]+\.)+([a-z]{2,}))\/[^/]+'
+
+# /** Options **/
+
+push=false
+
+while getopts ":p" opt; do
+  case $opt in
+    p)
+      push=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# !/** Options **/
 
 
 echo "INFO: Script for loading and pushing Che images found in folder..."
@@ -69,14 +86,18 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -iname "*.
             echo "WARN:     Tagging failed."
             continue
         fi
-        echo "INFO:     Pushing..."
-        docker push "$docker_image_path"
-        if [ $? -eq 0 ]; then
-            echo "INFO:     Pushed successfully."
-        else
-            docker_error_occured_in_file=1
-            echo "WARN:     Push failed."
-            continue
+
+        
+        if $push ; then
+            echo "INFO:     Pushing..."
+            docker push "$docker_image_path"
+            if [ $? -eq 0 ]; then
+                echo "INFO:     Pushed successfully."
+            else
+                docker_error_occured_in_file=1
+                echo "WARN:     Push failed."
+                continue
+            fi
         fi
     done
     if [[ "$docker_error_occured_in_file" -eq 0 ]]; then

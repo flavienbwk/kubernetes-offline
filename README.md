@@ -31,3 +31,9 @@ Benefit Kubernetes on your local computer when on vacation ✈️
     ```bash
     bash ./load-images.sh
     ```
+
+    Optionnally push them
+
+    ```bash
+    bash ./load-images.sh --push
+    ```
