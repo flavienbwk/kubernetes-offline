@@ -79,11 +79,12 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -o -iname 
             continue
         fi
 
-        docker_image_private=$(echo $docker_image_private | sed -E 's/\\\//\//g')
+        docker_image_private=$(echo $docker_image_private | sed -E 's/\\\//\//g' | sed -E 's/sha256:[0-9a-f]{64}//g')
         # Edge case tag for coredns
         if [[ $docker_image == *"coredns"* ]]; then
             docker_image_private=$(echo $docker_image_private | sed -E 's/coredns\/coredns/coredns/g')
         fi
+
         echo "INFO:     Tagging to \"$docker_image_private\""
         docker tag "$docker_image" "$docker_image_private"
         if [ $? -eq 0 ]; then
@@ -111,7 +112,8 @@ for chart_yaml_file_path in $(find "$IMAGES_DIR_PATH" -iname "*.yaml" -o -iname 
         docker_image=$(escape_slashes "$docker_image")
         if [[ "$docker_error_occured_in_file" -eq 0 ]]; then
             if [[ $chart_yaml_file_path == *.yaml ]]; then
-                sed -i -E "s/${docker_image}/${docker_image_private}/g" "$chart_yaml_file_path"
+                # Making YAML configs ready with offline infra
+                sed -i -E "s/${docker_image}(@sha256:[0-9a-f]{64})?/${docker_image_private}/g" "$chart_yaml_file_path"
                 echo "INFO: OK."
             fi
         else
