@@ -32,7 +32,7 @@ Benefit Kubernetes on your local computer when on vacation ✈️
     bash ./load-images.sh
     ```
 
-    Optionnally push them
+    Optionally push them :
 
     ```bash
     bash ./load-images.sh --push
