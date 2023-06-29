@@ -10,7 +10,7 @@ Benefit Kubernetes on your local Linux Ubuntu computer when on vacation ✈️
 
 - [`docker`](https://docs.docker.com/engine/install/) on source (Internet)
 - [`containerd`](https://github.com/containerd/containerd/blob/main/docs/getting-started.md) on target (air-gapped) hosts
-- A GitLab server on target's network
+- A [GitLab server](https://docs.gitlab.com/ee/install/docker.html) or a [container registry](https://github.com/distribution/distribution) on target's network
 
 ## A. Download dependencies (online)
 
@@ -74,8 +74,8 @@ Benefit Kubernetes on your local Linux Ubuntu computer when on vacation ✈️
 
     ```bash
     read -s -p "Enter your private registry URL (ex: gitlab.my.company): " private_registry 
-    read -s -p "Enter your GITLAB username: " username
-    read -s -p "Enter your GITLAB password: " password
+    read -s -p "Enter your GITLAB **username**: " username
+    read -s -p "Enter your GITLAB **password**: " password
 
     cp ./containerd.config.example.toml ./containerd.config.toml
     docker_token=$(echo -n "$username:$password" | base64)
