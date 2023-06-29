@@ -61,9 +61,9 @@ Benefit Kubernetes on your local Linux Ubuntu computer when on vacation ✈️
     Create a local repo in GitLab. Let's put it inside `mygroup/kubernetes` for the example !
 
     ```bash
-    read -s -p "Enter your private registry URL (ex: gitlab.my.company): " private_registry 
+    read -p "Enter your private registry URL (ex: gitlab.my.company): " private_registry 
 
-    read -s -p "Enter your GITLAB **username**: " username
+    read -p "Enter your GITLAB **username**: " username
 
     read -s -p "Enter your GITLAB **password**: " password
 
